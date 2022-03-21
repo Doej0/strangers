@@ -1,7 +1,6 @@
 import React, { useContext, createContext, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom";
-import { loginUser, registerUser,testMe } from "./api/index";
-
+import { loginUser, registerUser, testMe } from "./api/index";
 
 const authProvider = {
   signin(callback) {
@@ -21,41 +20,42 @@ const authProvider = {
 const AuthContext = createContext();
 
 export const ProvideAuth = ({ children }) => {
-  const [username, setUsername] = useState(null);
+  const [username, setUsername] = useState("");
 
   const signin = (userObject, callback) => {
     return authProvider.signin(() => {
       loginUser(userObject);
       setUsername(userObject.user.username);
       localStorage.setItem("stranger_things_User", userObject.user.username);
-      callback()
+      callback();
     });
-  }
+  };
 
   const signup = (userObject, callback) => {
     return authProvider.signup(() => {
       registerUser(userObject);
-     
-      callback()
-    });
-  }
 
-  const signout = () => {
+      callback();
+    });
+  };
+
+  const signout = (callback) => {
     return authProvider.signout(() => {
       localStorage.removeItem("stranger_things_User");
       localStorage.removeItem("stranger_things_JWT");
 
-      setUsername(null);
+      setUsername("");
+      callback();
     });
-  }
+  };
 
   let auth = { username, signin, signup, signout };
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
-}
+};
 
 export const useAuth = () => {
   return useContext(AuthContext);
-}
+};
 
 export const AuthStatus = () => {
   let auth = useAuth();
@@ -64,7 +64,7 @@ export const AuthStatus = () => {
   if (localStorage.getItem("stranger_things_User")) {
     auth.username = localStorage.getItem("stranger_things_User");
   }
-  
+
   if (!auth.username) {
     return <p>You are not logged in.</p>;
   }
@@ -81,7 +81,7 @@ export const AuthStatus = () => {
       </button>
     </p>
   );
-}
+};
 
 export const RequireAuth = ({ children }) => {
   let auth = useAuth();
@@ -92,7 +92,4 @@ export const RequireAuth = ({ children }) => {
   }
 
   return children;
-}
-
-
-
+};
