@@ -1,95 +1,107 @@
-import React, { useContext, createContext, useState } from "react";
-import { Redirect, useHistory, useLocation } from "react-router-dom";
-import { loginUser, registerUser, testMe } from "./api/index";
+import * as React from "react";
+import { Navigate, useNavigate, useLocation } from "react-router-dom";
+import { login, register, testMe } from "./api";
 
-const authProvider = {
+const accessProvider = {
   signin(callback) {
-    authProvider.isAuthenticated = testMe();
-    setTimeout(callback, 100); // fake async
+    accessProvider.isAuthenticated = testMe();
+    setTimeout(callback, 100); //fake async
   },
   signup(callback) {
-    authProvider.isAuthenticated = testMe();
+    accessProvider.isAuthenticated = testMe();
     setTimeout(callback, 100);
   },
   signout(callback) {
-    authProvider.isAuthenticated = false;
+    accessProvider.isAuthenticated = false;
     setTimeout(callback, 100);
   },
 };
 
-const AuthContext = createContext();
+let AuthContext = React.createContext();
 
-export const ProvideAuth = ({ children }) => {
-  const [username, setUsername] = useState("");
+export function AuthProvider({ children }) {
+  let [user, setUser] = React.useState(null);
 
-  const signin = (userObject, callback) => {
-    return authProvider.signin(() => {
-      loginUser(userObject);
-      setUsername(userObject.user.username);
-      localStorage.setItem("stranger_things_User", userObject.user.username);
+  let signin = (newUser, password, callback) => {
+    return accessProvider.signin(() => {
+      login(newUser, password).then((token) => {
+        localStorage.setItem("user", newUser);
+        localStorage.setItem("strangers_things_JWT", token);
+      });
+      setUser(newUser);
       callback();
     });
   };
 
-  const signup = (userObject, callback) => {
-    return authProvider.signup(() => {
-      registerUser(userObject);
+  let signup = (newUser, password, callback) => {
+    return accessProvider.signup(() => {
+      register(newUser, password);
 
       callback();
     });
   };
 
-  const signout = (callback) => {
-    return authProvider.signout(() => {
-      localStorage.removeItem("stranger_things_User");
-      localStorage.removeItem("stranger_things_JWT");
-
-      setUsername("");
+  let signout = (callback) => {
+    return accessProvider.signout(() => {
+      localStorage.clear();
+      setUser(null);
       callback();
     });
   };
 
-  let auth = { username, signin, signup, signout };
-  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
-};
+  React.useEffect(() => {
+    function fetchData() {
+      testMe().then((result) => {
+        if (result.success) {
+          setUser(result.data.user.username);
+        }
+      });
+    }
+    fetchData();
+  }, []);
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+  let value = { user, signin, signup, signout };
 
-export const AuthStatus = () => {
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  return React.useContext(AuthContext);
+}
+
+export function AuthStatus() {
   let auth = useAuth();
-  let history = useHistory();
+  let navigate = useNavigate();
 
-  if (localStorage.getItem("stranger_things_User")) {
-    auth.username = localStorage.getItem("stranger_things_User");
-  }
-
-  if (!auth.username) {
+  if (!auth.user) {
     return <p>You are not logged in.</p>;
   }
 
   return (
     <p>
-      Welcome {auth.username}!{" "}
+      Welcome {auth.user}!{" "}
       <button
         onClick={() => {
-          auth.signout(() => history.push("/"));
+          auth.signout(() => navigate("/posts"));
         }}
       >
         Sign out
       </button>
     </p>
   );
-};
+}
 
-export const RequireAuth = ({ children }) => {
+export function RequireAuth({ children }) {
   let auth = useAuth();
   let location = useLocation();
 
-  if (!auth.username) {
-    return <Redirect to="/login" state={{ from: location }} replace />;
+  if (!auth.user) {
+    // Redirect them to the /login page, but save the current location they were
+    // trying to go to when they were redirected. This allows us to send them
+    // along to that page after they login, which is a nicer user experience
+    // instead of dropping them off on the home page.
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;
-};
+}

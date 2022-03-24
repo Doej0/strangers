@@ -1,20 +1,18 @@
-import { Link } from "react-router-dom";
-import './App.css';
+import "./App.css";
+import { Outlet, Link } from "react-router-dom";
 import { AuthStatus } from "./use-auth";
 
-
-const App = () => {
+export default function App() {
   return (
     <div>
       <AuthStatus />
-      <nav>
-        <Link to="/">Posts</Link>
+      <nav className="topnav">
+        <Link className="posts" to="/posts">
+          Posts
+        </Link>
         <Link to="/profile">Profile</Link>
       </nav>
+      <Outlet />
     </div>
   );
 }
-
-
-
-export default App;

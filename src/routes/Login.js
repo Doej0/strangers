@@ -1,48 +1,53 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../use-auth";
-const RegisterPage = () => {
+
+export default function Login() {
   let navigate = useNavigate();
   let location = useLocation();
   let auth = useAuth();
 
-  let from = location.state?.from?.pathname || "/login";
+  let from = location.state?.from?.pathname || "/profile";
 
-  const handleSubmit = (event) => {
+  function handleSubmit(event) {
     event.preventDefault();
 
     let formData = new FormData(event.currentTarget);
     let username = formData.get("uname");
     let password = formData.get("pwd");
-    auth.signup(username, password, () => {
+
+    auth.signin(username, password, () => {
       navigate(from, { replace: true });
     });
-  };
+  }
+
   return (
     <div>
-      <h2>Register Here</h2>
+      <h2>Login Form</h2>
+
       <form onSubmit={handleSubmit}>
         <div className="container">
-          <label htmlFor="name">Username:</label>
+          <label htmlFor="uname">
+            <b>Username</b>
+          </label>
           <input
             type="text"
             placeholder="Enter Username"
-            name="username"
-            id="name"
+            name="uname"
             required
           />
-          <label htmlFor="pwd">Password:</label>
+          <label htmlFor="pwd">
+            <b>Password</b>
+          </label>
           <input
-            type="text"
+            type="password"
             placeholder="Enter Password"
-            name="password"
-            id="pwd"
+            name="pwd"
             required
           />
-          <button type="submit">Sign up</button>
+          <input type="submit" value="Log in" />
         </div>
       </form>
+      <Link to="/register">Sign up</Link>
     </div>
   );
-};
-
-export default RegisterPage;
+}

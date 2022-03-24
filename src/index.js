@@ -1,38 +1,45 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { BrowserRouter as Router, Switch, Route} from 'react-router-dom';
-import './index.css';
-import App from './App';
-import { ProvideAuth, RequireAuth } from './use-auth';
+import { render } from "react-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import App from "./App";
 import Posts from "./routes/Posts";
-import LoginPage from "./routes/LoginPage";
-import RegisterPage from "./routes/RegisterPage";
+import Post from "./routes/Post";
+import NoMatch from "./routes/NoMatch";
+import Login from "./routes/Login";
 import Profile from "./routes/Profile";
+import { AuthProvider, RequireAuth } from "./use-auth";
+import RegisterPage from "./routes/RegisterPage";
 
-ReactDOM.render(
-  <React.StrictMode>
-    <ProvideAuth>
-      <Router>
-        <App />
-        <Switch>
-          <Route exact path="/">
-            <Posts />
+const rootElement = document.getElementById("root");
+render(
+  <BrowserRouter>
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<App />}>
+          <Route path="posts" element={<Posts />}>
+            <Route
+              index
+              element={
+                <main style={{ padding: "1rem" }}>
+                  <p>Select a post</p>
+                </main>
+              }
+            />
+            <Route path=":postId" element={<Post />} />
           </Route>
-          <Route path="/login">
-            <LoginPage />
-          </Route>
-          <Route path="/register">
-            <RegisterPage />
-          </Route>
-          <Route path="/profile">
-            <RequireAuth>
-              <Profile />
-            </RequireAuth>
-          </Route>
-          <Router />
-        </Switch>
-      </Router>
-    </ProvideAuth>
-  </React.StrictMode>,
-  document.getElementById('root')
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<RegisterPage />} />
+          <Route
+            path="profile"
+            element={
+              <RequireAuth>
+                <Profile />
+              </RequireAuth>
+            }
+          />
+          <Route path="*" element={<NoMatch />} />
+        </Route>
+      </Routes>
+    </AuthProvider>
+  </BrowserRouter>,
+  rootElement
 );
